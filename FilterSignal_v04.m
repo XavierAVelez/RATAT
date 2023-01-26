@@ -1,0 +1,105 @@
+%% File
+%{
+Filename: FilterSignal.m
+Written By: Xavier Velez
+Version: 0.4
+Created On: 9/26/2022
+Last Updated: 9/26/2022
+
+take power spectrum analysis of input signal through fourier transform
+    play around with FFT or STFT
+find the frequency of the claps by looking at the highest power frequencies
+    may not be able to distinguish between Aaron's and participant's
+        include both
+convert signal back to time domain using inverse transform
+create an FIR bandpass to contain all clap frequencies
+create an FIR bandstop to dampen frequencies in the middle of the two claps
+    only do this if necessary (can be conditional)
+normalize output to a 1 dimensional binary vector
+store and return the clap impulses triggered on the rising edge
+
+%}
+
+
+function [finalList, rawList] = FilterSignal_v04(y,Fs,threshFactor)
+%[y, Fs] = audioread('analyze/STE-005/STE-005.mp3');
+
+bandpassSpecs = fdesign.bandpass('N,Fst1,Fp1,Fp2,Fst2,C', ...
+    500,600,700,1000,1100,Fs);
+bandpassSpecs.Stopband1Constrained = true;
+bandpassSpecs.Astop1 = 80;
+bandpassSpecs.Stopband2Constrained = true;
+bandpassSpecs.Astop2 = 80;
+
+bandpassFilt = design(bandpassSpecs, 'Systemobject', true);
+
+%fvtool(bandpassFilt);
+y = bandpassFilt(y);
+
+%audiowrite("TestFile.wav", y, Fs);
+
+%{
+[s,f,t] = stft(abs(y(:,1)),Fs);
+figure(2);
+waterfall(t,f,abs(s));
+xlabel('Time');
+xlim([0 8])
+ylabel('Frequency');
+ylim([-1e4 1e4]);
+zlabel('Short Time Fourier Transform');
+zlim([0 0.1]);
+
+% take the FFT of the signal
+Y = fft(y);
+L = length(Y);
+
+% plot power spectrum of FFT
+P2 = abs(Y/L);
+P1 = P2(1:L/2+1);
+P1(2:end-1) = 2*P1(2:end-1);
+f = Fs*(0:(L/2))/L;
+
+figure(2);
+plot(f,P1);
+title("Single-Sided Amplitude Spectrum of audio");
+xlabel("f (Hz)");
+ylabel("|P1(f)|");
+%}
+
+% convert the signal into a 1D list of zeros and ones
+y = abs(y(:,1));
+step = 44;
+fileList = zeros(floor(size(y,1)/ step), 1);
+
+threshold = median(y(:,1)) * threshFactor;
+
+j = 1;
+for i=1:step:size(y,1)-step
+    iter = y(i:i+step-1);
+    if any(iter >= threshold)
+        fileList(j) = 1;
+    end
+    j = j + 1;
+end
+
+finalList = [];
+rawList = [];
+startWrite = false;
+count = 50;
+for ii = 2:size(fileList)
+    if fileList(ii) == 1 && fileList(ii-1) == 0 && count > 40
+        finalList = [finalList 1];
+        rawList = [rawList 1];
+        startWrite = true;
+        count = 0;
+    elseif startWrite
+        finalList = [finalList 0];
+        rawList = [rawList 0];
+        count = count + 1;
+    else
+        rawList = [rawList 0];
+    end
+end
+
+end
+
