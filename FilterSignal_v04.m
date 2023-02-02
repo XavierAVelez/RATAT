@@ -85,9 +85,9 @@ end
 finalList = [];
 rawList = [];
 startWrite = false;
-count = 50;
+count = 100;
 for ii = 2:size(fileList)
-    if fileList(ii) == 1 && fileList(ii-1) == 0 && count > 40
+    if fileList(ii) == 1 && fileList(ii-1) == 0 && count > 85
         finalList = [finalList 1];
         rawList = [rawList 1];
         startWrite = true;

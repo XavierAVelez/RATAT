@@ -8,7 +8,7 @@
       <file>${PROJECT_ROOT}\RATAT_resources\icon_24.png</file>
       <file>${PROJECT_ROOT}\RATAT_resources\icon_16.png</file>
     </param.icons>
-    <param.version>1.2</param.version>
+    <param.version>1.3</param.version>
     <param.authnamewatermark>Xavier Velez</param.authnamewatermark>
     <param.email>xavierv0531@gmail.com</param.email>
     <param.company>University of Florida</param.company>
